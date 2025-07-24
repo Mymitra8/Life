@@ -1,62 +1,53 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const axios = require('axios');
+const express = require("express");
+const TelegramBot = require("node-telegram-bot-api");
+const cors = require("cors");
 
+// Replace with your bot token and your personal Telegram chat ID
+const TOKEN = "7517117855:AAEyKwSl2s6P79S2j3HpKuDsfJUmcVP_nlQ";
+const CHAT_ID = "6501836590"; // Replace with your real chat ID
+
+const bot = new TelegramBot(TOKEN, { polling: true });
 const app = express();
-app.use(bodyParser.json());
+const PORT = process.env.PORT || 10000;
 
-const TOKEN = '7517117855:AAEyKwSl2s6P79S2j3HpKuDsfJUmcVP_nlQ'; // Replace with your actual token if needed
-const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
-const CHAT_ID = '6521628628'; // Optional, if you want to send from server directly
+app.use(cors());
+app.use(express.json()); // Important for reading POST body
 
-// 🛠️ Webhook Route for Telegram
-app.post('/webhook', async (req, res) => {
-  const message = req.body.message;
-  if (!message || !message.text) {
-    return res.sendStatus(200);
-  }
-
-  const chatId = message.chat.id;
-  const userMessage = message.text;
-
-  // ✨ Example Reply
-  const replyText = `📩 You said: "${userMessage}"\n\n🧠 I am your MitraBot!`;
-
-  await axios.post(`${TELEGRAM_API}/sendMessage`, {
-    chat_id: chatId,
-    text: replyText
-  });
-
-  res.sendStatus(200);
+// Handle /start command on Telegram
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, "🚀 Mitra Alert Bot is active and ready to send you trading alerts!");
 });
 
-// ✅ Webhook Route for TradingView Alerts
-app.post('/webhook/tradingview', async (req, res) => {
+// Webhook POST route — from TradingView, Postman, or CURL
+app.post("/webhook", async (req, res) => {
   const { coin, signal, entry, sl, tp, time } = req.body;
 
-  if (!coin || !signal || !entry || !sl || !tp) {
-    return res.status(400).send("Missing fields in TradingView alert");
+  if (!coin || !signal || !entry) {
+    return res.status(400).send("Missing fields in payload");
   }
 
-  const alertMsg = `🚨 *${coin} Signal Alert!*\n` +
-                   `${signal === "BUY" ? "🟢" : "🔴"} *Signal:* ${signal}\n` +
-                   `💰 *Entry:* ${entry}\n` +
-                   `🛡️ *SL:* ${sl}\n` +
-                   `🎯 *TP:* ${tp}\n` +
-                   `🕒 *Time:* ${time}`;
+  const emoji = signal.toUpperCase() === "BUY" ? "🟢" : "🔴";
 
-  await axios.post(`${TELEGRAM_API}/sendMessage`, {
-    chat_id: '6521628628',
-    text: alertMsg,
-    parse_mode: "Markdown"
-  });
+  const message = `
+📈 *${coin}*
+${emoji} *${signal.toUpperCase()}* at ${entry}
 
-  res.sendStatus(200);
+🎯 SL: ${sl || "-"}
+💰 TP: ${tp || "-"}
+🕒 ${time || new Date().toLocaleString()}
+`;
+
+  try {
+    await bot.sendMessage(CHAT_ID, message, { parse_mode: "Markdown" });
+    return res.status(200).send("✅ Telegram alert sent");
+  } catch (err) {
+    console.error("❌ Error sending Telegram message:", err.message);
+    return res.status(500).send("Telegram error");
+  }
 });
 
-
-// ✅ Start Server
-const PORT = process.env.PORT || 3000;
+// Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
