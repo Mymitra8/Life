@@ -1,15 +1,16 @@
 {
-  "name": "mymitrabot",
+  "name": "telegram-bot",
   "version": "1.0.0",
-  "description": "Telegram bot server using Express and Axios",
+  "description": "A Telegram bot for alerts",
   "main": "bot-server.js",
-  "start":,
   "scripts": {
     "start": "node bot-server.js"
-  }
+  },
   "dependencies": {
     "axios": "^1.6.8",
     "body-parser": "^1.20.2",
-    "express": "^4.18.2"
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "node-telegram-bot-api": "^0.61.0"
   }
 }
