@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Telegram bot server using Express and Axios",
   "main": "bot-server.js",
-  "start":
+  "start":,
   "scripts": {
     "start": "node bot-server.js"
-  },
+  }
   "dependencies": {
     "axios": "^1.6.8",
     "body-parser": "^1.20.2",
